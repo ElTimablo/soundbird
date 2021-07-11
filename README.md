@@ -1,1 +1,1 @@
-Rolls dice and fuckin honks.
+Rolls dice and fuckin honks
