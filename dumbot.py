@@ -21,14 +21,15 @@ async def testFunc(context):
 	print('Test received')
 	await context.send('Is this thing on?')
 
-@bot.command(name='dice', help='Rolls a die of the specified number of sides')
-async def rollDice(context, arg):
-	try:
-		r = random.randint(0, int(arg))
-	except ValueError:
-		await context.send("Enter an integer, dickhead")
-	else:
-		await context.send('You rolled ' + str(r))
+# DEPRECATED
+# @bot.command(name='dice', help='Rolls a die of the specified number of sides')
+# async def rollDice(context, arg):
+	# try:
+		# r = random.randint(1, int(arg))
+	# except ValueError:
+		# await context.send("Enter an integer, dickhead")
+	# else:
+		# await context.send('You rolled ' + str(r))
 
 # Join the specified voice channel, or the author's if none is specified
 @bot.command(name='connect', help='Connect the bot to a voice channel.')
@@ -69,4 +70,31 @@ async def honk(context, channel: discord.VoiceChannel = None):
 		# vc = await voice_channel.connect()
 		
 		# vc.play(discord.FFmpegPCMAudio(
+		
+@bot.command(name='roll')
+async def roll_dice(context, arg="1d6"):
+	try:
+		dice = cut_into_ints(arg)
+		total = 0
+		dlist = []
+		for i in range(dice[0]):
+			roll = random.randint(1, dice[1])
+			dlist.append(roll)
+			total += roll
+	except ValueError:
+		await context.send("Enter an integer, dickhead")
+	else:
+		dstring = ""
+		for i in range(dice[0]):
+			dstring += (str(dlist[i]) + " ")
+		await context.send("You rolled "+ str(dice[0]) + "d" + str(dice[1]) + ", getting "+ str(total) + " \( " + dstring + "\)")
+
+def cut_into_ints(arg: str):
+	arg = arg.lower()
+	if "d" in arg:
+		part = arg.partition("d")
+		return (int(part[0]), int(part[2]))
+	else:
+		return (1, int(arg))
+
 bot.run(token)
