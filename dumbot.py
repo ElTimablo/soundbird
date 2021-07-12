@@ -72,7 +72,8 @@ async def honk(context, channel: discord.VoiceChannel = None):
 		# vc.play(discord.FFmpegPCMAudio(
 		
 @bot.command(name='roll')
-async def roll_dice(context, arg="1d6"):
+@bot.command(name='roll', help='Specify the size and number of dice to roll (5d6, 10d8, 1d20)')
+async def roll_dice(context, arg="1d20"):	
 	try:
 		dice = cut_into_ints(arg)
 		total = 0
@@ -84,16 +85,17 @@ async def roll_dice(context, arg="1d6"):
 	except ValueError:
 		await context.send("Enter an integer, dickhead")
 	else:
-		dstring = ""
-		for i in range(dice[0]):
-			dstring += (str(dlist[i]) + " ")
-		await context.send("You rolled "+ str(dice[0]) + "d" + str(dice[1]) + ", getting "+ str(total) + " \( " + dstring + "\)")
+		send_str = "You rolled "+ str(dice[0]) + "d" + str(dice[1]) + ", getting "+ str(total) + " " + (str(tuple(dlist)) if len(dlist) > 1 else "")
+		if len(send_str) < 2001:
+			await context.send(send_str)
+		else:
+			await context.send("You rolled a shitload of dice, getting "+ str(total) + ".")
 
-def cut_into_ints(arg: str):
+def cut_into_ints(arg: str) -> tuple:
 	arg = arg.lower()
 	if "d" in arg:
 		part = arg.partition("d")
-		return (int(part[0]), int(part[2]))
+		return (int(part[0] if part[0] != "" else "1"), int(part[2]))
 	else:
 		return (1, int(arg))
 
