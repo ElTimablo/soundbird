@@ -71,28 +71,46 @@ async def honk(context, channel: discord.VoiceChannel = None):
 		
 		# vc.play(discord.FFmpegPCMAudio(
 		
-@bot.command(name='roll')
-@bot.command(name='roll', help='Specify the size and number of dice to roll (5d6, 10d8, 1d20)')
-async def roll_dice(context, arg="1d20"):	
+@bot.command(name='roll', help='Specify the size and number of dice to roll (5d6, 10d8, 1d20). Without context, will roll 1d20.')
+async def roll_dice(context, arg="1d20"):
+	arg = arg.lower()
+	part = get_mod(arg)
+	arg = part[0]
 	try:
-		dice = cut_into_ints(arg)
-		total = 0
-		dlist = []
-		for i in range(dice[0]):
-			roll = random.randint(1, dice[1])
-			dlist.append(roll)
-			total += roll
+		mod = int(part[2]) if part[2] != "" else 0
 	except ValueError:
-		await context.send("Enter an integer, dickhead")
+		await context.send("You fucked up... try again.")
 	else:
-		send_str = "You rolled "+ str(dice[0]) + "d" + str(dice[1]) + ", getting "+ str(total) + " " + (str(tuple(dlist)) if len(dlist) > 1 else "")
-		if len(send_str) < 2001:
-			await context.send(send_str)
+		addsub = 1 if part[1] == "+" else -1 if part[1] == "-" else 0
+
+		try:
+			dice = cut_into_ints(arg)
+			total = mod * addsub
+			dlist = []
+			for i in range(dice[0]):
+				roll = random.randint(1, dice[1])
+				dlist.append(roll)
+				total += roll
+		except ValueError:
+			await context.send("Enter an integer, dickhead")
 		else:
-			await context.send("You rolled a shitload of dice, getting "+ str(total) + ".")
+			send_str = "You rolled "+ str(dice[0]) + "d" + str(dice[1]) + part[1] + part[2] + " " + (str(dlist) if len(dlist) > 1 or addsub != 0 else "") + ", getting " + str(total)
+			if len(send_str) < 2001:
+				await context.send(send_str)
+			else:
+				await context.send("You rolled a shitload of dice, getting "+ str(total) + ".")
+
+def get_mod(arg: str) -> tuple:
+	
+	if "+" in arg:
+		return arg.partition("+")
+	elif "-" in arg:
+		return arg.partition("-")
+	else:
+		return (arg, "", "")
+
 
 def cut_into_ints(arg: str) -> tuple:
-	arg = arg.lower()
 	if "d" in arg:
 		part = arg.partition("d")
 		return (int(part[0] if part[0] != "" else "1"), int(part[2]))
