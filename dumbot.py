@@ -94,11 +94,20 @@ async def roll_dice(context, arg="1d20"):
 		except ValueError:
 			await context.send("Enter an integer, dickhead")
 		else:
-			send_str = "You rolled "+ str(dice[0]) + "d" + str(dice[1]) + part[1] + part[2] + " " + (str(dlist) if len(dlist) > 1 or addsub != 0 else "") + ", getting " + str(total)
+			send_str = f"You rolled {dice[0]}d{dice[1]}{part[1]}{part[2]} "+ (str(dlist) if len(dlist) > 1 or addsub != 0 else "") + f", getting {total}."
 			if len(send_str) < 2001:
 				await context.send(send_str)
 			else:
-				await context.send("You rolled a shitload of dice, getting "+ str(total) + ".")
+				await context.send(f"You rolled a shitload of dice, getting {total}.")
+
+def get_mod(arg: str) -> tuple:
+	
+	if "+" in arg:
+		return arg.partition("+")
+	elif "-" in arg:
+		return arg.partition("-")
+	else:
+		return (arg, "", "")
 
 def get_mod(arg: str) -> tuple:
 	
