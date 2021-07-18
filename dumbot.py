@@ -109,16 +109,6 @@ def get_mod(arg: str) -> tuple:
 	else:
 		return (arg, "", "")
 
-def get_mod(arg: str) -> tuple:
-	
-	if "+" in arg:
-		return arg.partition("+")
-	elif "-" in arg:
-		return arg.partition("-")
-	else:
-		return (arg, "", "")
-
-
 def cut_into_ints(arg: str) -> tuple:
 	if "d" in arg:
 		part = arg.partition("d")
