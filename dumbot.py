@@ -12,6 +12,9 @@ random.seed(version=2)
 
 bot = Bot(command_prefix='$')
 token= "ODU3Mzc4ODc3MzAxODUwMTU0.YNOuTQ.UN6iy-4NtS17XErfS72Ble5Qu9M"
+
+penis_size = 1
+
 @bot.event
 async def on_ready():
 	print(f'{bot.user} in the house!')
@@ -115,5 +118,14 @@ def cut_into_ints(arg: str) -> tuple:
 		return (int(part[0] if part[0] != "" else "1"), int(part[2]))
 	else:
 		return (1, int(arg))
+
+@bot.command(name="penis", help="Make the bot's penis grow")
+async def penis(context):
+	global penis_size
+	shaft = ""
+	for i in range(penis_size):
+		shaft = shaft + "="
+	await context.send(f"( ){shaft}D")
+	penis_size += 1 if penis_size < 1996 else 0
 
 bot.run(token)
