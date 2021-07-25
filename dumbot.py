@@ -12,6 +12,7 @@ random.seed(version=2)
 
 bot = Bot(command_prefix='$')
 token= "ODU3Mzc4ODc3MzAxODUwMTU0.YNOuTQ.UN6iy-4NtS17XErfS72Ble5Qu9M"
+FILENAME = "penis_size.txt"
 
 penis_size = 1
 
@@ -121,11 +122,22 @@ def cut_into_ints(arg: str) -> tuple:
 
 @bot.command(name="penis", help="Make the bot's penis grow")
 async def penis(context):
-	global penis_size
+	penis_size = read_int(FILENAME)
+	
 	shaft = ""
 	for i in range(penis_size):
 		shaft = shaft + "="
 	await context.send(f"( ){shaft}D")
+	
 	penis_size += 1 if penis_size < 1996 else 0
+	save_int(penis_size, FILENAME)
+
+def read_int(filename) -> int:
+	with open(filename) as file:
+		return int(file.read())
+
+def save_int(num, filename):
+	with open(filename, 'w') as file:
+		file.write(str(num))
 
 bot.run(token)
