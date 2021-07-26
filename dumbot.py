@@ -9,6 +9,7 @@ import youtube_dl
 import mariadb
 import sys
 import json
+import os
 
 intents=Intents.all()
 random.seed(version=2)
@@ -18,20 +19,27 @@ bot = Bot(command_prefix='$')
 tokenfile=open("dumbot.token", "r")
 json_prefs = open("dumbot.json", "r")
 
-prefs = json.load(json_prefs)
-db_user = prefs['prefs'][0]['db_user']
-db_password = prefs['prefs'][0]['db_password']
-db_host = prefs['prefs'][0]['db_host']
-db_port = prefs['prefs'][0]['db_port']
-db_database = prefs['prefs'][0]['db_database']
+#prefs = json.load(json_prefs)
+#db_user = prefs['prefs'][0]['db_user']
+#db_password = prefs['prefs'][0]['db_password']
+#db_host = prefs['prefs'][0]['db_host']
+#db_port = prefs['prefs'][0]['db_port']
+#db_database = prefs['prefs'][0]['db_database']
 
-print(db_user)
-print(db_password)
-print(db_host)
-print(db_port)
-print(db_database)
+#print(db_user)
+#print(db_password)
+#print(db_host)
+#print(db_port)
+#print(db_database)
 
-print(prefs)
+#print(prefs)
+db_user = os.environ['DB_USER']
+db_password = os.environ['DB_PASS']
+db_host = os.environ['DB_HOST']
+db_port = os.environ['DB_PORT']
+db_database = os.environ['DB_DATABASE']
+if db_user == "" or db_password == "" or db_host == "" or db_port == "" or db_database =="":
+    sys.exit(1)
 token = tokenfile.read()
 FILENAME = "penis_size.txt"
 penis_size = 1
