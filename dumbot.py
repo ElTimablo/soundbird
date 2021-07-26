@@ -16,8 +16,8 @@ random.seed(version=2)
 
 bot = Bot(command_prefix='$')
 
-tokenfile=open("dumbot.token", "r")
-json_prefs = open("dumbot.json", "r")
+#tokenfile=open("dumbot.token", "r")
+#json_prefs = open("dumbot.json", "r")
 
 #prefs = json.load(json_prefs)
 #db_user = prefs['prefs'][0]['db_user']
@@ -33,6 +33,8 @@ json_prefs = open("dumbot.json", "r")
 #print(db_database)
 
 #print(prefs)
+
+token = os.environ['DISCORD_TOKEN']
 db_user = os.environ['DB_USER']
 db_password = os.environ['DB_PASS']
 db_host = os.environ['DB_HOST']
