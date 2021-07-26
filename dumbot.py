@@ -34,16 +34,6 @@ async def testFunc(context):
         print('Test received')
         await context.send('Is this thing on?')
 
-# DEPRECATED
-# @bot.command(name='dice', help='Rolls a die of the specified number of sides')
-# async def rollDice(context, arg):
-        # try:
-                # r = random.randint(1, int(arg))
-        # except ValueError:
-                # await context.send("Enter an integer, dickhead")
-        # else:
-                # await context.send('You rolled ' + str(r))
-
 # Join the specified voice channel, or the author's if none is specified
 @bot.command(name='connect', help='Connect the bot to a voice channel.')
 async def vc_connect(context, *, channel: discord.VoiceChannel = None):
@@ -74,6 +64,8 @@ async def honk(context, channel: discord.VoiceChannel = None):
         else:
                 await context.send(str(context.author.name) + " is not in a channel.")
         await context.message.delete()
+
+
 @bot.command(name='roll', help='Specify the size and number of dice to roll (5d6, 10d8, 1d20). Without context, will roll 1d20.')
 async def roll_dice(context, arg="1d20"):
         arg = arg.lower()
@@ -138,7 +130,7 @@ async def penis(context):
         shaft = ""
         for i in range(penis_size):
                 shaft = shaft + "="
-        await context.send(f"(( ){shaft}D")
+        await context.send(f"((_){shaft}D")
 
         penis_size += 1 if penis_size < 1995 else 0
         save_int(penis_size, FILENAME)
