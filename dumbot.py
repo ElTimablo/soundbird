@@ -42,7 +42,6 @@ db_port = os.environ['DB_PORT']
 db_database = os.environ['DB_DATABASE']
 if db_user == "" or db_password == "" or db_host == "" or db_port == "" or db_database =="":
     sys.exit(1)
-token = tokenfile.read()
 FILENAME = "penis_size.txt"
 penis_size = 1
 
