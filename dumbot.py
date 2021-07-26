@@ -8,42 +8,20 @@ import time
 import youtube_dl
 import mariadb
 import sys
-import json
 import os
 
 intents=Intents.all()
 random.seed(version=2)
-
+penis_size = 1
 bot = Bot(command_prefix='$')
 
-#tokenfile=open("dumbot.token", "r")
-#json_prefs = open("dumbot.json", "r")
-
-#prefs = json.load(json_prefs)
-#db_user = prefs['prefs'][0]['db_user']
-#db_password = prefs['prefs'][0]['db_password']
-#db_host = prefs['prefs'][0]['db_host']
-#db_port = prefs['prefs'][0]['db_port']
-#db_database = prefs['prefs'][0]['db_database']
-
-#print(db_user)
-#print(db_password)
-#print(db_host)
-#print(db_port)
-#print(db_database)
-
-#print(prefs)
-
+# These must be set on the command line or through Docker or else the bot won't start
 token = os.environ['DISCORD_TOKEN']
 db_user = os.environ['DB_USER']
 db_password = os.environ['DB_PASS']
 db_host = os.environ['DB_HOST']
 db_port = os.environ['DB_PORT']
 db_database = os.environ['DB_DATABASE']
-if db_user == "" or db_password == "" or db_host == "" or db_port == "" or db_database =="":
-    sys.exit(1)
-FILENAME = "penis_size.txt"
-penis_size = 1
 
 try:
     conn = mariadb.connect(user = db_user, password = db_password, host = db_host, port = int(db_port), database = db_database)
@@ -139,7 +117,7 @@ def cut_into_ints(arg: str) -> tuple:
         else:
                 return (1, int(arg))
 
-@bot.command(name="penis", help="Make the bot's penis grow")
+@bot.command(name="penis", help="Be the biggest dick you can be")
 async def penis(context):       
         user = context.author
         penis_size = 1
@@ -162,6 +140,7 @@ async def penis(context):
 
         penis_size += 1 if penis_size < 1995 else 0
         save_int(penis_size, FILENAME)
+        await context.message.delete()
 
 @bot.command(name="dickstats", help="See who's got the biggest willy")
 async def dickstats(context):
@@ -172,16 +151,6 @@ async def dickstats(context):
     col_width = 30
     for name,peen in topDicks:
         sendstring = sendstring + str(name).ljust(col_width) + "\t\t\t" + str(peen).ljust(col_width) + "\n"
-#        sendstring = sendstring + "{:<40}{:5}".format(name, peen) + "\n"
         
     await context.send(f"{sendstring}")
-
-def read_int(filename) -> int:
-        with open(filename) as file:
-                return int(file.read())
-
-def save_int(num, filename):
-        with open(filename, 'w') as file:
-                file.write(str(num))
-
 bot.run(token)
