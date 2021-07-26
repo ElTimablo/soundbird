@@ -8,17 +8,36 @@ import time
 import youtube_dl
 import mariadb
 import sys
+import json
 
 intents=Intents.all()
 random.seed(version=2)
 
 bot = Bot(command_prefix='$')
-token= "ODU3Mzc4ODc3MzAxODUwMTU0.YNOuTQ.UN6iy-4NtS17XErfS72Ble5Qu9M"
+
+tokenfile=open("dumbot.token", "r")
+json_prefs = open("dumbot.json", "r")
+
+prefs = json.load(json_prefs)
+db_user = prefs['prefs'][0]['db_user']
+db_password = prefs['prefs'][0]['db_password']
+db_host = prefs['prefs'][0]['db_host']
+db_port = prefs['prefs'][0]['db_port']
+db_database = prefs['prefs'][0]['db_database']
+
+print(db_user)
+print(db_password)
+print(db_host)
+print(db_port)
+print(db_database)
+
+print(prefs)
+token = tokenfile.read()
 FILENAME = "penis_size.txt"
 penis_size = 1
 
 try:
-    conn = mariadb.connect(user="root", password="fuck0ff", host="192.168.1.26", port=3307, database="dumbot")
+    conn = mariadb.connect(user = db_user, password = db_password, host = db_host, port = int(db_port), database = db_database)
 except mariadb.Error as e:
     print(f"Error connecting to MariaDB: {e}")
     sys.exit(1)
@@ -130,10 +149,23 @@ async def penis(context):
         shaft = ""
         for i in range(penis_size):
                 shaft = shaft + "="
-        await context.send(f"((_){shaft}D")
+        await context.send(f"{context.author.mention} ((_){shaft}D")
 
         penis_size += 1 if penis_size < 1995 else 0
         save_int(penis_size, FILENAME)
+
+@bot.command(name="dickstats", help="See who's got the biggest willy")
+async def dickstats(context):
+    user = context.author
+    cur.execute("SELECT name, penus FROM users ORDER BY penus DESC;")
+    topDicks = cur.fetchall()
+    sendstring = ""
+    col_width = 30
+    for name,peen in topDicks:
+        sendstring = sendstring + str(name).ljust(col_width) + "\t\t\t" + str(peen).ljust(col_width) + "\n"
+#        sendstring = sendstring + "{:<40}{:5}".format(name, peen) + "\n"
+        
+    await context.send(f"{sendstring}")
 
 def read_int(filename) -> int:
         with open(filename) as file:
