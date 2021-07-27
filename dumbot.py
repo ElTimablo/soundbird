@@ -147,10 +147,10 @@ async def dickstats(context):
     user = context.author
     cur.execute("SELECT name, penus FROM users ORDER BY penus DESC;")
     topDicks = cur.fetchall()
-    sendstring = ""
+    sendstring = "``"
     col_width = 30
     for name,peen in topDicks:
-        sendstring = sendstring + str(name).ljust(col_width) + "\t\t\t" + str(peen).ljust(col_width) + "\n"
-        
+        sendstring = sendstring + str(name).ljust(col_width) + "\t\t\t" + str(peen).rjust(5) + "\n"
+    sendstring = sendstring + "``"
     await context.send(f"{sendstring}")
 bot.run(token)
