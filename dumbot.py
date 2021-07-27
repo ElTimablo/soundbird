@@ -139,7 +139,6 @@ async def penis(context):
         await context.send(f"{context.author.mention} ((_){shaft}D")
 
         penis_size += 1 if penis_size < 1995 else 0
-        save_int(penis_size, FILENAME)
         await context.message.delete()
 
 @bot.command(name="dickstats", help="See who's got the biggest willy")
