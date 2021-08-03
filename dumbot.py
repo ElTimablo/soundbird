@@ -23,13 +23,13 @@ db_host = os.environ['DB_HOST']
 db_port = os.environ['DB_PORT']
 db_database = os.environ['DB_DATABASE']
 
-try:
-    conn = mariadb.connect(user = db_user, password = db_password, host = db_host, port = int(db_port), database = db_database)
-except mariadb.Error as e:
-    print(f"Error connecting to MariaDB: {e}")
-    sys.exit(1)
-
-cur = conn.cursor()
+def connectDB():
+    try:
+        conn = mariadb.connect(user = db_user, password = db_password, host = db_host, port = int(db_port), database = db_database)
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB: {e}")
+        sys.exit(1)
+    return conn
 
 @bot.event
 async def on_ready():
@@ -118,7 +118,9 @@ def cut_into_ints(arg: str) -> tuple:
                 return (1, int(arg))
 
 @bot.command(name="penis", help="Be the biggest dick you can be")
-async def penis(context):       
+async def penis(context):
+        conn = connectDB()
+        cur = conn.cursor()
         user = context.author
         penis_size = 1
         cur.execute("SELECT penus FROM users WHERE name like %s", (str(user),))
@@ -140,6 +142,7 @@ async def penis(context):
 
         penis_size += 1 if penis_size < 1995 else 0
         await context.message.delete()
+        conn.close()
 
 @bot.command(name="dickstats", help="See who's got the biggest willy")
 async def dickstats(context):
