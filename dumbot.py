@@ -9,7 +9,10 @@ import youtube_dl
 import mariadb
 import sys
 import os
+import requests
 
+
+storagepath = './'
 intents=Intents.all()
 random.seed(version=2)
 penis_size = 1
@@ -23,6 +26,7 @@ db_host = os.environ['DB_HOST']
 db_port = os.environ['DB_PORT']
 db_database = os.environ['DB_DATABASE']
 
+
 def connectDB():
     try:
         conn = mariadb.connect(user = db_user, password = db_password, host = db_host, port = int(db_port), database = db_database)
@@ -31,14 +35,17 @@ def connectDB():
         sys.exit(1)
     return conn
 
+
 @bot.event
 async def on_ready():
         print(f'{bot.user} in the house!')
+
 
 @bot.command(name = 'test')
 async def testFunc(context):
         print('Test received')
         await context.send('Is this thing on?')
+
 
 # Join the specified voice channel, or the author's if none is specified
 @bot.command(name='connect', help='Connect the bot to a voice channel.')
@@ -51,10 +58,12 @@ async def vc_connect(context, *, channel: discord.VoiceChannel = None):
                 await dest.connect()
                 await context.send("Joined " + dest.name)
 
+
 # Leave current voice channel
 @bot.command(name='disconnect', help='Drop everything and leave voice')
 async def vc_disconnect(context):
         await context.voice_client.disconnect()
+
 
 # Goose
 @bot.command(name='honk')
@@ -101,6 +110,7 @@ async def roll_dice(context, arg="1d20"):
                         else:
                                 await context.send(f"You rolled a shitload of dice, getting {total}.")
 
+
 def get_mod(arg: str) -> tuple:
 
         if "+" in arg:
@@ -110,12 +120,14 @@ def get_mod(arg: str) -> tuple:
         else:
                 return (arg, "", "")
 
+
 def cut_into_ints(arg: str) -> tuple:
         if "d" in arg:
                 part = arg.partition("d")
                 return (int(part[0] if part[0] != "" else "1"), int(part[2]))
         else:
                 return (1, int(arg))
+
 
 @bot.command(name="penis", help="Be the biggest dick you can be")
 async def penis(context):
@@ -144,9 +156,12 @@ async def penis(context):
         await context.message.delete()
         conn.close()
 
+
 @bot.command(name="dickstats", help="See who's got the biggest willy")
 async def dickstats(context):
     user = context.author
+    conn = connectDB()
+    cur = conn.cursor()
     cur.execute("SELECT name, penus FROM users ORDER BY penus DESC;")
     topDicks = cur.fetchall()
     sendstring = "``"
@@ -155,4 +170,53 @@ async def dickstats(context):
         sendstring = sendstring + str(name).ljust(col_width) + "\t\t\t" + str(peen).rjust(5) + "\n"
     sendstring = sendstring + "``"
     await context.send(f"{sendstring}")
+
+
+@bot.command(name="slurp", help="Upload a file if you have permission")
+async def slurp(context):
+    conn = connectDB()
+    cur = conn.cursor()
+    user = context.author
+    cur.execute("SELECT admin FROM users WHERE name LIKE %s", (str(user),))
+    isAdmin = cur.fetchall()
+    attachmentList = ""
+    if isAdmin:
+        for attachment in context.message.attachments:
+            attachmentList += attachment.url + " "
+            upload = requests.get(attachment.url)
+            open(storagepath + attachment.filename, 'wb').write(upload.content)
+        if attachmentList != "":
+           await context.send(attachmentList)
+        else:
+            await context.send("Nothing")
+    else:
+        await context.send("Fuggoff")
+    conn.close()
+
+def find(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            return os.path.join(root, name)
+
+@bot.command(name='play')
+async def play(context, arg, channel: discord.VoiceChannel = None):
+    voice_channel = ""
+    if context.author.voice != None:
+        voice_channel = context.author.voice.channel
+    filelocation = find(arg + ".mp3", storagepath)
+    print("file: ", filelocation)
+    if filelocation == None:
+        await context.send("Sound clip not found")
+        return
+    print(voice_channel)
+    if voice_channel:
+        channel = voice_channel.name
+        vc = await voice_channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source=filelocation))
+        while vc.is_playing():
+            time.sleep(.1)
+        await vc.disconnect()
+    else:
+        await context.send(str(context.author.name) + " is not in a channel.")
+    await context.message.delete()
 bot.run(token)
