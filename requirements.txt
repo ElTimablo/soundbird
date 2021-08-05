@@ -13,3 +13,4 @@ typing-extensions==3.10.0.0
 yarl==1.6.3
 youtube_dl>=0.0.0
 mariadb>=0.0.0
+requests>=0.0.0
