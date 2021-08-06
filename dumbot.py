@@ -10,9 +10,9 @@ import mariadb
 import sys
 import os
 import requests
+import fnmatch
 
-
-storagepath = './'
+storagepath = './stuff'
 intents=Intents.all()
 random.seed(version=2)
 penis_size = 1
@@ -177,20 +177,23 @@ async def slurp(context):
     conn = connectDB()
     cur = conn.cursor()
     user = context.author
+    cur.execute("INSERT IGNORE INTO users SET name=%s", (str(user),))
+    conn.commit()
     cur.execute("SELECT admin FROM users WHERE name LIKE %s", (str(user),))
     isAdmin = cur.fetchall()
     attachmentList = ""
-    if isAdmin:
+    if isAdmin[0][0]==1: # I hate that this is a one-element list of one-element tuples
         for attachment in context.message.attachments:
             attachmentList += attachment.url + " "
             upload = requests.get(attachment.url)
-            open(storagepath + attachment.filename, 'wb').write(upload.content)
+            filename = attachment.filename.replace('_', '-')
+            open(storagepath + filename, 'wb').write(upload.content)
         if attachmentList != "":
            await context.send(attachmentList)
         else:
-            await context.send("Nothing")
+            await context.send("Nothing. You gave me fucking NOTHING.")
     else:
-        await context.send("Fuggoff")
+        await context.send("You don't have permission. Ask Tim to do database stuff.")
     conn.close()
 
 def find(name, path):
@@ -198,9 +201,31 @@ def find(name, path):
         if name in files:
             return os.path.join(root, name)
 
+def findpattern(pattern, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name))
+    return result
+
 @bot.command(name='play')
 async def play(context, arg, channel: discord.VoiceChannel = None):
     voice_channel = ""
+    if arg == "list":
+        soundlist = findpattern("*.mp3", storagepath)
+        soundname = ""
+        soundstring = ""
+        for sound in soundlist:
+            soundname = sound.partition("/")[2].partition("/")[2].partition(".")[0]
+#            soundname = soundname.partition("/")[2]
+#            soundname = soundname.partition(".")[0]
+            soundstring += (" - " + soundname + "\n")
+        if soundstring != "":
+            await context.send(soundstring)
+        else:
+            await context.send("No sounds found")
+        return
     if context.author.voice != None:
         voice_channel = context.author.voice.channel
     filelocation = find(arg + ".mp3", storagepath)
@@ -208,7 +233,6 @@ async def play(context, arg, channel: discord.VoiceChannel = None):
     if filelocation == None:
         await context.send("Sound clip not found")
         return
-    print(voice_channel)
     if voice_channel:
         channel = voice_channel.name
         vc = await voice_channel.connect()
