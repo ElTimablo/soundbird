@@ -11,6 +11,8 @@ import sys
 import os
 import requests
 import fnmatch
+import docker
+import json
 
 storagepath = './stuff'
 intents=Intents.all()
@@ -35,16 +37,23 @@ def connectDB():
         sys.exit(1)
     return conn
 
+def init():
+    conn = connectDB()
+    cur = conn.cursor()
+    # Make sure the database is set up before we start
+    cur.execute("CREATE TABLE IF NOT EXISTS users (id VARCHAR(100) NOT NULL, name VARCHAR(37) NOT NULL, penus INT DEFAULT 0, admin TINYINT(1) NOT NULL DEFAULT 0, bio VARCHAR(1000), CONSTRAINT unique_id UNIQUE(id));")
+    conn.commit()
+    conn.close()
 
 @bot.event
 async def on_ready():
         print(f'{bot.user} in the house!')
 
 
-@bot.command(name = 'test')
-async def testFunc(context):
-        print('Test received')
-        await context.send('Is this thing on?')
+#@bot.command(name = 'test')
+#async def testFunc(context):
+#        print('Test received')
+#        await context.send('Is this thing on?')
 
 
 # Join the specified voice channel, or the author's if none is specified
@@ -133,9 +142,9 @@ def cut_into_ints(arg: str) -> tuple:
 async def penis(context):
         conn = connectDB()
         cur = conn.cursor()
-        user = context.author
+        user = context.author.id
         penis_size = 1
-        cur.execute("SELECT penus FROM users WHERE name like %s", (str(user),))
+        cur.execute("SELECT penus FROM users WHERE id like %s", (str(user),))
         penis_size = cur.fetchall()
 
         # New users will return an empty list. In this case, set penis_size to 1
@@ -144,7 +153,7 @@ async def penis(context):
         else:
         # Fetchall returns a list of tuples. fetchone() is probably what I actually want here, but so fucking what
             penis_size = penis_size[0][0]
-        cur.execute("INSERT INTO users (name, penus) VALUES (?, ?) ON DUPLICATE KEY UPDATE penus=?", (str(user), penis_size+1, penis_size+1) )
+        cur.execute("INSERT INTO users (id, name, penus) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE penus=?", (str(user), str(context.author), penis_size+1, penis_size+1) )
         # Just in case the host has autocommit turned off by default
         conn.commit()
         shaft = ""
@@ -176,25 +185,27 @@ async def dickstats(context):
 async def slurp(context):
     conn = connectDB()
     cur = conn.cursor()
-    user = context.author
-    cur.execute("INSERT IGNORE INTO users SET name=%s", (str(user),))
+    user = context.author.id
+    cur.execute("INSERT IGNORE INTO users SET id=%s", (str(user),))
     conn.commit()
-    cur.execute("SELECT admin FROM users WHERE name LIKE %s", (str(user),))
+    cur.execute("SELECT admin FROM users WHERE id LIKE %s", (str(user),))
     isAdmin = cur.fetchall()
     attachmentList = ""
+    conn.close()
     if isAdmin[0][0]==1: # I hate that this is a one-element list of one-element tuples
+        print(str(user) + " verified as admin.\n")
         for attachment in context.message.attachments:
             attachmentList += attachment.url + " "
             upload = requests.get(attachment.url)
             filename = attachment.filename.replace('_', '-')
-            open(storagepath + filename, 'wb').write(upload.content)
+            open(storagepath + "/" + filename, 'wb').write(upload.content)
         if attachmentList != "":
-           await context.send(attachmentList)
+            await context.send("File slurped: " + filename)
         else:
             await context.send("Nothing. You gave me fucking NOTHING.")
     else:
         await context.send("You don't have permission. Ask Tim to do database stuff.")
-    conn.close()
+    await context.message.delete()
 
 def find(name, path):
     for root, dirs, files in os.walk(path):
@@ -209,6 +220,65 @@ def findpattern(pattern, path):
                 result.append(os.path.join(root, name))
     return result
 
+
+#@bot.command(name='grant')
+#async def grant(context, username):
+#    conn = connectDB()
+#    cur = conn.cursor()
+#    grantor = context.author.id
+#    cur.execute("SELECT admin FROM users WHERE id LIKE %s", (str(grantor),))
+#    isAdmin = cur.fetchall()
+#    if isAdmin[0][0] == 1:
+    #TODO: Finish this shit
+
+def tuplestodict(tup):
+    result = {}
+    for line in tup:
+        pair = line.partition(":")
+        result[pair[0]] = pair[2]
+    return result
+
+def parsevols(ltup):
+    result = {}
+    for item in ltup:
+        pair = item.partition(":")
+        result[pair[0]] = {'bind': pair[2], 'mode': 'rw'}
+        return result
+
+@bot.command(name='server')
+async def server(context, cmd, arg=""):
+    client = docker.from_env()
+    output = ""
+    if cmd == "list":
+        containerlist = client.containers.list()
+        for container in containerlist:
+            output += container.name + "\n"
+        await context.send(output)
+        return
+    elif cmd == "start":
+        await context.send("I'm here")
+        settingsfile = open(arg + ".json", "r")
+        settings = json.load(settingsfile)
+        fports = ""
+        if "ports" in settings.keys():
+            fports = settings['services'][arg]['ports']
+            print(fports)
+        portdict = tuplestodict(fports)
+        print(portdict)
+        fenvironment = ""
+        if 'environment' in settings.keys():
+            fenvironment = settings['services'][arg]['environment']
+            print(fenvironment)
+        envdict = tuplestodict(fenvironment)
+        print(envdict)
+        fvolumes = settings['services'][arg]['volumes']
+        voldict = parsevols(fvolumes)
+        print(voldict)
+        fimage = settings['services'][arg]['image']
+        print("Running container ", fimage)
+        client.containers.run(image = fimage, ports = portdict, environment=envdict, volumes = voldict, detach=True)
+        return
+
 @bot.command(name='play')
 async def play(context, arg, channel: discord.VoiceChannel = None):
     voice_channel = ""
@@ -218,11 +288,10 @@ async def play(context, arg, channel: discord.VoiceChannel = None):
         soundstring = ""
         for sound in soundlist:
             soundname = sound.partition("/")[2].partition("/")[2].partition(".")[0]
-#            soundname = soundname.partition("/")[2]
-#            soundname = soundname.partition(".")[0]
             soundstring += (" - " + soundname + "\n")
         if soundstring != "":
             await context.send(soundstring)
+            await context.message.delete()
         else:
             await context.send("No sounds found")
         return
@@ -243,4 +312,6 @@ async def play(context, arg, channel: discord.VoiceChannel = None):
     else:
         await context.send(str(context.author.name) + " is not in a channel.")
     await context.message.delete()
+
+init()
 bot.run(token)
