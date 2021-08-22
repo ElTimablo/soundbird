@@ -12,5 +12,5 @@ six==1.16.0
 typing-extensions==3.10.0.0
 yarl==1.6.3
 youtube_dl>=0.0.0
-mariadb>=0.0.0
+mariadb==1.0.7
 requests>=0.0.0
