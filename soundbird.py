@@ -194,10 +194,10 @@ def findpattern(pattern, path):
                 result.append(os.path.join(root, name))
     return result
 
-@bot.command(name='play', help="Use $play list to show available sounds, $play <soundname> to play it. Must be in a voice channel")
-async def play(context, arg, channel: discord.VoiceChannel = None):
-    voice_channel = context.guild.voice_client
-    print("Connecting to voice channel ", voice_channel)
+@bot.command(name='play', help="$play list shows available sounds, $play <soundname> to play one. Must be in a voice channel")
+async def play(context, arg*, channel: discord.VoiceChannel = None):
+    voice_channel = ""
+    #print("Connecting to voice channel ", voice_channel)
     if arg == "list":
         soundlist = findpattern("*.mp3", storagepath)
         soundname = ""
@@ -211,24 +211,35 @@ async def play(context, arg, channel: discord.VoiceChannel = None):
         else:
             await context.send("No sounds found")
         return
-    if context.author.voice != None:
-        voice_channel = context.author.voice.channel
-    elif channel != "":
+
+    if channel != "":
         voice_channel = channel
+    elif context.author.voice != None:
+        voice_channel = context.author.voice.channel
+
     filelocation = find(arg + ".mp3", storagepath)
     print("file: ", filelocation)
+
     if filelocation == None:
         await context.send("Sound clip not found")
         return
-    if voice_channel:
-        channel = voice_channel.name
+    if voice_channel and not context.guild.voice_client: #User provides a channel. Bot is not connected
+        print("First if")
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(source=filelocation))
         while vc.is_playing():
             time.sleep(.1)
         await vc.disconnect()
-    else:
-        await context.send(str(context.author.name) + " is not in a channel.")
+    elif context.guild.voice_client: #Bot is already connected and user doesn't provide a channel
+        print("Second if")
+        voice_channel = context.guild.voice_client
+        print (voice_channel)
+        voice_channel.play(discord.FFmpegPCMAudio(source=filelocation))
+    elif not voice_channel:
+        print("Third if")
+    #if context.guid.voice_client:
+    #else:
+        #await context.send(str(context.author.name) + " is not in a channel.")
     await context.message.delete()
 
 init()
