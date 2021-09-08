@@ -195,18 +195,25 @@ def findpattern(pattern, path):
     return result
 
 @bot.command(name='play', help="$play list shows available sounds, $play <soundname> to play one. Must be in a voice channel")
-async def play(context, arg*, channel: discord.VoiceChannel = None):
+async def play(context, arg, channel: discord.VoiceChannel = None):
     voice_channel = ""
     #print("Connecting to voice channel ", voice_channel)
     if arg == "list":
         soundlist = findpattern("*.mp3", storagepath)
         soundname = ""
+        embed = discord.Embed()
         soundstring = ""
-        for sound in soundlist:
-            soundname = sound.partition("/")[2].partition("/")[2].partition(".")[0]
-            soundstring += (" - " + soundname + "\n")
+        halfsies = False
+        for i in range(len(soundlist)):
+            soundname = soundlist[i].partition("/")[2].partition("/")[2].partition(".")[0]
+            soundstring += (f"{soundname}\n")
+            if not halfsies and i > len(soundlist)/2-1:
+                embed.add_field(name="Sound List", value=soundstring, inline=True)
+                soundstring = ""
+                halfsies = True
+        embed.add_field(name="_ _", value=soundstring, inline=True)
+        await context.send(embed=embed)
         if soundstring != "":
-            await context.send(soundstring)
             await context.message.delete()
         else:
             await context.send("No sounds found")
@@ -230,13 +237,25 @@ async def play(context, arg*, channel: discord.VoiceChannel = None):
         while vc.is_playing():
             time.sleep(.1)
         await vc.disconnect()
-    elif context.guild.voice_client: #Bot is already connected and user doesn't provide a channel
+    elif voice_channel and context.guild.voice_client: #Bot is already connected and user doesn't provide a channel
         print("Second if")
         voice_channel = context.guild.voice_client
         print (voice_channel)
         voice_channel.play(discord.FFmpegPCMAudio(source=filelocation))
-    elif not voice_channel:
+    elif not voice_channel and context.guild.voice_client: #User doesn't provide a voice channel and the bot is connected to one already
         print("Third if")
+        vc = context.guild.voice_client
+        print(vc)
+        vc.play(discord.FFmpegPCMAudio(source=filelocation))
+    else: # User doesn't provide a voice channel and the bot isn't connected to one
+        print("Else")
+        if not context.author.voice.channel:
+            await context.send("Either provide a voice channel or join one yourself")
+            return
+        else:
+            vchannel = context.author.voice.channel
+            vc = await vchannel.connect()
+            vc.play(discord.FFmpegPCMAudio(source=filelocation))
     #if context.guid.voice_client:
     #else:
         #await context.send(str(context.author.name) + " is not in a channel.")
