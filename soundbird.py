@@ -62,6 +62,7 @@ async def vc_connect(context, *, channel: discord.VoiceChannel = None):
 @bot.command(name='disconnect', help='Drop everything and leave voice')
 async def vc_disconnect(context):
         await context.voice_client.disconnect()
+        await context.message.delete()
 
 @bot.command(name='roll', help='Specify the size and number of dice to roll (5d6, 10d8, 1d20). Without context, will roll 1d20.')
 async def roll_dice(context, arg="1d20"):
@@ -195,7 +196,7 @@ def findpattern(pattern, path):
     return result
 
 @bot.command(name='play', help="$play list shows available sounds, $play <soundname> to play one. Must be in a voice channel")
-async def play(context, arg, channel: discord.VoiceChannel = None):
+async def play(context, arg, *, channel: discord.VoiceChannel = None):
     voice_channel = ""
     #print("Connecting to voice channel ", voice_channel)
     if arg == "list":
@@ -250,9 +251,11 @@ async def play(context, arg, channel: discord.VoiceChannel = None):
     else: # User doesn't provide a voice channel and the bot isn't connected to one
         print("Else")
         if not context.author.voice.channel:
+            print("Nested if 1")
             await context.send("Either provide a voice channel or join one yourself")
             return
         else:
+            print("Nested Else")
             vchannel = context.author.voice.channel
             vc = await vchannel.connect()
             vc.play(discord.FFmpegPCMAudio(source=filelocation))
